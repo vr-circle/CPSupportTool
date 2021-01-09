@@ -1,6 +1,8 @@
 use reqwest;
 use scraper;
 use std::env;
+use std::fs;
+use std::io::Write;
 use std::time::Instant;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -20,6 +22,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Ok(());
             }
 
+            fs::create_dir(format!("{}", args[2]))?;
+
             let tasks_url = format!("https://atcoder.jp/contests/{}/tasks", args[2]);
             println!("{}", tasks_url);
 
@@ -34,6 +38,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             for e in elements {
                 println!("problem-{}", e.text().next().unwrap());
+                fs::create_dir(format!("./{}/{}", args[2], e.text().next().unwrap()))?;
+
                 let mut index_start = 0;
                 let mut index_end = 0;
                 for (i, c) in e.html().chars().enumerate() {
@@ -62,10 +68,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 for (index, element) in elements.enumerate() {
                     if index % 2 == 0 {
                         println!("input: {}", index / 2 + 1);
+                        let mut file = fs::File::create(format!(
+                            "./{}/{}/{}.in",
+                            args[2],
+                            e.text().next().unwrap(),
+                            index / 2 + 1
+                        ))?;
+                        let context = element.text().next().unwrap();
+                        println!("{}", context);
+                        file.write_all(context.as_bytes()).unwrap();
                     } else {
                         println!("output: {}", index / 2 + 1);
+                        let mut file = fs::File::create(format!(
+                            "./{}/{}/{}.out",
+                            args[2],
+                            e.text().next().unwrap(),
+                            index / 2 + 1
+                        ))?;
+                        let context = element.text().next().unwrap();
+                        println!("{}", context);
+                        file.write_all(context.as_bytes()).unwrap();
                     }
-                    println!("{}", element.text().next().unwrap());
                 }
             }
         }
