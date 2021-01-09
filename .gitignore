@@ -1,1 +1,8 @@
 /target
+
+# テストケースのフォルダ
+/test
+# 実行ファイル
+a.out
+# 初期ファイル
+sample.cpp
