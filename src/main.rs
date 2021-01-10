@@ -19,7 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let command = args[1].as_str();
     match command {
-        "new" => {
+        "n" => {
             println!("start creating new contest files");
             if args.len() == 2 {
                 println!("cli new <target_contest_name>");
@@ -27,6 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             fs::create_dir(format!("{}", args[2]))?;
             let tasks_url = format!("https://atcoder.jp/contests/{}/tasks", args[2]);
+            // println!("target tasks url: {}", tasks_url);
             let parse_str = "tbody > tr > td.text-center.no-break > a";
             let selector = scraper::Selector::parse(parse_str).unwrap();
 
@@ -38,6 +39,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             for e in elements {
                 fs::create_dir_all(format!("./{}/{}/test", args[2], e.text().next().unwrap()))?;
+                // println!(
+                //     "create dir: ./{}/{}/test",
+                //     args[2],
+                //     e.text().next().unwrap()
+                // );
 
                 match fs::copy(
                     init_file_path,
@@ -65,7 +71,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .filter(|&(i, _)| i >= index_start && i < index_end)
                     .fold("".to_string(), |s, (_, c)| format!("{}{}", s, c));
 
-                let parse_str = ".lang-ja > .part pre";
+                // println!("problem url: {}{}", atcoder_url, target_task_url);
+
+                let parse_str =
+                    r#"div[id="task-statement"] > .lang > .lang-ja > .part > section > pre"#;
                 let selector = scraper::Selector::parse(parse_str).unwrap();
                 let body =
                     reqwest::blocking::get(format!("{}{}", atcoder_url, target_task_url).as_str())?
@@ -74,6 +83,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let elements = document.select(&selector);
                 for (index, element) in elements.enumerate() {
                     if index % 2 == 0 {
+                        // println!(
+                        //     "create file: ./{}/{}/{}.in",
+                        //     args[2],
+                        //     e.text().next().unwrap(),
+                        //     index / 2 + 1
+                        // );
                         let mut file = fs::File::create(format!(
                             "./{}/{}/test/{}.in",
                             args[2],
@@ -82,7 +97,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         ))?;
                         let context = element.text().next().unwrap();
                         file.write_all(context.as_bytes()).unwrap();
+                    // println!("{}", context);
                     } else {
+                        // println!(
+                        //     "create file: ./{}/{}/{}.out",
+                        //     args[2],
+                        //     e.text().next().unwrap(),
+                        //     index / 2 + 1
+                        // );
                         let mut file = fs::File::create(format!(
                             "./{}/{}/test/{}.out",
                             args[2],
@@ -91,6 +113,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         ))?;
                         let context = element.text().next().unwrap();
                         file.write_all(context.as_bytes()).unwrap();
+                        // println!("{}", context);
                     }
                 }
             }
