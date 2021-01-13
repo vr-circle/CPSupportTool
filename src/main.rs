@@ -1,10 +1,8 @@
 use std::env;
 use std::time::Instant;
-mod login;
-mod new;
-mod submit;
-mod test;
-mod utils;
+
+mod subcommand;
+use subcommand::utils::std_output;
 
 fn main() {
     // measure the execution time
@@ -19,22 +17,22 @@ fn main() {
     let command = args[1].as_str();
     match command {
         "n" => {
-            utils::print_info(
-                utils::PrintColor::INFO,
+            std_output::print_info(
+                std_output::PrintColor::INFO,
                 "INFO",
                 "start creating new directorys",
             );
-            match new::new(args) {
+            match subcommand::new::new(args) {
                 Ok(()) => {
-                    utils::print_info(
-                        utils::PrintColor::SUCCESS,
-                        "SUCCESS",
+                    std_output::print_info(
+                        std_output::PrintColor::INFO,
+                        "INFO",
                         "create new contest directory completed",
                     );
                 }
                 Err(_) => {
-                    utils::print_info(
-                        utils::PrintColor::ERROR,
+                    std_output::print_info(
+                        std_output::PrintColor::ERROR,
                         "ERROR",
                         "failed to execute the new command",
                     );
@@ -42,48 +40,68 @@ fn main() {
             }
         }
         "t" => {
-            utils::print_info(utils::PrintColor::INFO, "INFO", "start testing code");
-            match test::test_code() {
+            std_output::print_info(std_output::PrintColor::INFO, "INFO", "start testing code");
+            match subcommand::test::test_code() {
                 Ok(()) => {
-                    utils::print_info(
-                        utils::PrintColor::SUCCESS,
-                        "SUCCESS",
+                    std_output::print_info(
+                        std_output::PrintColor::INFO,
+                        "INFO",
                         "code-test is completed.",
                     );
                 }
                 Err(_) => {
-                    utils::print_info(utils::PrintColor::ERROR, "ERROR", "failed to code test");
+                    std_output::print_info(
+                        std_output::PrintColor::ERROR,
+                        "ERROR",
+                        "failed to code test",
+                    );
                 }
             }
         }
         "s" => {
-            utils::print_info(utils::PrintColor::INFO, "INFO", "start submitting code.");
-            match submit::submit_code() {
+            std_output::print_info(
+                std_output::PrintColor::INFO,
+                "INFO",
+                "start submitting code.",
+            );
+            match subcommand::submit::submit_code() {
                 Ok(()) => {
-                    utils::print_info(
-                        utils::PrintColor::SUCCESS,
-                        "SUCCESS",
+                    std_output::print_info(
+                        std_output::PrintColor::INFO,
+                        "INFO",
                         "submit code is completed.",
                     );
                 }
                 Err(_) => {
-                    utils::print_info(utils::PrintColor::ERROR, "ERROR", "failed to submit code.");
+                    std_output::print_info(
+                        std_output::PrintColor::ERROR,
+                        "ERROR",
+                        "failed to submit code.",
+                    );
                 }
             }
         }
         "login" => {
-            utils::print_info(utils::PrintColor::INFO, "INFO", "start login");
-            match login::login() {
+            std_output::print_info(std_output::PrintColor::INFO, "INFO", "start login");
+            match subcommand::login::login() {
                 Ok(()) => {
-                    utils::print_info(utils::PrintColor::SUCCESS, "SUCCESS", "login is completed.");
+                    std_output::print_info(
+                        std_output::PrintColor::INFO,
+                        "INFO",
+                        "login is completed.",
+                    );
                 }
                 Err(_) => {
-                    utils::print_info(utils::PrintColor::ERROR, "ERROR", "failed to login");
+                    std_output::print_info(
+                        std_output::PrintColor::ERROR,
+                        "ERROR",
+                        "failed to login",
+                    );
                 }
             }
         }
         _ => {
-            println!("[ERROR] command not found");
+            std_output::print_info(std_output::PrintColor::ERROR, "ERROR", "command not found");
         }
     }
 

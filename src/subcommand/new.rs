@@ -4,7 +4,6 @@ use std::fs;
 use std::io::Write;
 
 pub fn new(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
-    println!("start creating new contest files");
     if args.len() == 2 {
         println!("cli new <target_contest_name>");
         return Ok(());
