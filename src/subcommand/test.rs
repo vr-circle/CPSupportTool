@@ -1,10 +1,12 @@
 use super::utils;
-use std::fs;
 use std::io::prelude::*;
 use std::io::Read;
 use std::io::Write;
 use std::process::{Command, Stdio};
 use std::time::Duration;
+use std::{fs, result};
+use subprocess::Redirection;
+use subprocess::{Exec, Popen, PopenConfig};
 use wait_timeout::ChildExt;
 
 pub fn test_code() -> Result<(), Box<dyn std::error::Error>> {
@@ -32,87 +34,69 @@ pub fn test_code() -> Result<(), Box<dyn std::error::Error>> {
             .map(|&s| s as char)
             .collect::<String>();
 
-        let process_status: i8;
-        let mut process = std::process::Command::new("./a.out")
-            .stdin(std::process::Stdio::piped())
-            .stdout(std::process::Stdio::piped())
+        // let process = Exec::cmd("./a.out")
+        //     .stdin(input_string.as_str())
+        //     .stdout(Redirection::Pipe)
+        //     .capture()?
+        //     .stdout_str();
+
+        // let subprocess = Exec::cmd("./a.out").popen().unwrap();
+        let mut subprocess = std::process::Command::new("./a.out")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
             .spawn()
             .unwrap();
-        println!("created process");
 
-        process
-            .stdin
-            .unwrap()
-            .write_all(input_string.as_bytes())
-            .unwrap();
+        {
+            let stdin = subprocess.stdin.as_mut().expect("failed to get stdin");
+            stdin
+                .write_all(input_string.as_bytes())
+                .expect("failed to write to stdin");
+        }
+
+        let is_timeout: bool;
+
+        match subprocess.wait_timeout(Duration::new(2, 0)).unwrap() {
+            Some(status) => {
+                println!("not timeout");
+                is_timeout = false;
+                status.code()
+            }
+            None => {
+                println!("timeout");
+                is_timeout = true;
+                subprocess.kill().unwrap();
+                subprocess.wait().unwrap().code()
+            }
+        };
+
         let mut user_ans = String::new();
-        process
+        subprocess
             .stdout
             .unwrap()
             .read_to_string(&mut user_ans)
             .unwrap();
-        let status_code = match process.wait_timeout(Duration::from_secs(2)).unwrap() {
-            Some(status) => {
-                println!("Some");
-                println!("status: {}", status.code().unwrap());
-                Ok(())
-            }
-            None => {
-                println!("None");
-                Err(())
-            }
-        };
-        println!("status code: {}", status_code == Ok(()));
-        // match process.stdin.unwrap().write_all(input_string.as_bytes()) {
-        // match process.stdout.unwrap().read_to_string(&mut user_ans) {
 
-        // let wait_secs = Duration::from_secs(2);
-        // let _status_code = match process.wait_timeout(wait_secs).unwrap() {
-        //     Some(status) => {
-        //         println!("Some");
-        //         process_status = 1;
-        //         status.code().unwrap()
-        //     }
-        //     None => {
-        //         println!("None");
-        //         process.kill().unwrap();
-        //         process_status = 0;
-        //         process.wait().unwrap().code().unwrap()
-        //     }
-        // };
-        // println!("status code: {}", _status_code);
-        // println!("process status: {}", process_status);
-        // if _status_code == 0 {
-        //     continue;
-        // }
-        // match process.stdin.unwrap().write_all(input_string.as_bytes()) {
-        //     Err(why) => panic!("couldn't write to ./a.out stdin: {}", why),
-        //     Ok(_) => {}
-        // }
-        // let mut user_ans = String::new();
-        // match process.stdout.unwrap().read_to_string(&mut user_ans) {
-        //     Err(why) => panic!("couldn't read ./a.out stdout: {}", why),
-        //     Ok(_) => {}
-        // }
+        let correct_ans = fs::read(format!("{}.out", file_name_without_extension))
+            .unwrap()
+            .iter()
+            .map(|&s| s as char)
+            .collect::<String>();
 
-        // if process_status == 0 {
-        //     println!("TLE");
-        //     continue;
-        // }
-        // let correct_ans = fs::read(format!("{}.out", file_name_without_extension))
-        //     .unwrap()
-        //     .iter()
-        //     .map(|&s| s as char)
-        //     .collect::<String>();
-        // if user_ans == correct_ans {
-        //     ac_num += 1;
-        //     utils::std_output::print_info(utils::std_output::PrintColor::SUCCESS, "SUCCESS", "AC");
-        // } else {
-        //     utils::std_output::print_info(utils::std_output::PrintColor::ERROR, "FAILURE", "WA");
-        //     println!("input:\n{}", input_string);
-        //     println!("output:\n{}", user_ans);
-        //     println!("expected:\n{}", correct_ans);
-        // }
+        if user_ans == correct_ans {
+            ac_num += 1;
+            utils::std_output::print_info(utils::std_output::PrintColor::SUCCESS, "SUCCESS", "AC");
+        } else if is_timeout {
+            utils::std_output::print_info(utils::std_output::PrintColor::WARN, "FAILURE", "TLE");
+            println!("input:\n{}", input_string);
+            println!("output:\n{}", user_ans);
+            println!("expected:\n{}", correct_ans);
+        } else {
+            utils::std_output::print_info(utils::std_output::PrintColor::ERROR, "FAILURE", "WA");
+            println!("input:\n{}", input_string);
+            println!("output:\n{}", user_ans);
+            println!("expected:\n{}", correct_ans);
+        }
     }
     if ac_num == problem_num {
         utils::std_output::print_info(
