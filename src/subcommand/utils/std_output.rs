@@ -1,10 +1,15 @@
 pub enum PrintColor {
-    ERROR = 31,
-    SUCCESS = 32,
-    INFO = 34,
-    WARN = 35,
+    RED = 31,
+    GREEN = 32,
+    YELLOW = 33,
+    BLUE = 34,
+}
+
+pub fn color_print(color: PrintColor, content: &str) -> String {
+    let result = format!("\x1b[{}m{}\x1b[m", color as i32, content);
+    return result;
 }
 
 pub fn print_info(color: PrintColor, content: &str, message: &str) {
-    println!("[\x1b[{}m{}\x1b[m] {}", color as i32, content, message);
+    println!("[{}] {}", color_print(color, content), message);
 }

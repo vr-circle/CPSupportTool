@@ -18,41 +18,41 @@ fn main() {
     match command {
         "n" => {
             std_output::print_info(
-                std_output::PrintColor::INFO,
+                std_output::PrintColor::BLUE,
                 "INFO",
                 "start creating new directorys",
             );
             match subcommand::new::new(args) {
                 Ok(()) => {
                     std_output::print_info(
-                        std_output::PrintColor::INFO,
+                        std_output::PrintColor::BLUE,
                         "INFO",
                         "create new contest directory completed",
                     );
                 }
                 Err(_) => {
                     std_output::print_info(
-                        std_output::PrintColor::ERROR,
-                        "ERROR",
+                        std_output::PrintColor::RED,
+                        "RED",
                         "failed to execute the new command",
                     );
                 }
             }
         }
         "t" => {
-            std_output::print_info(std_output::PrintColor::INFO, "INFO", "start testing code");
+            std_output::print_info(std_output::PrintColor::BLUE, "INFO", "start testing code");
             match subcommand::test::test_code() {
                 Ok(()) => {
                     std_output::print_info(
-                        std_output::PrintColor::INFO,
+                        std_output::PrintColor::BLUE,
                         "INFO",
                         "code-test is completed.",
                     );
                 }
                 Err(_) => {
                     std_output::print_info(
-                        std_output::PrintColor::ERROR,
-                        "ERROR",
+                        std_output::PrintColor::RED,
+                        "RED",
                         "failed to code test",
                     );
                 }
@@ -60,48 +60,44 @@ fn main() {
         }
         "s" => {
             std_output::print_info(
-                std_output::PrintColor::INFO,
+                std_output::PrintColor::BLUE,
                 "INFO",
                 "start submitting code.",
             );
             match subcommand::submit::submit_code() {
                 Ok(()) => {
                     std_output::print_info(
-                        std_output::PrintColor::INFO,
+                        std_output::PrintColor::BLUE,
                         "INFO",
                         "submit code is completed.",
                     );
                 }
                 Err(_) => {
                     std_output::print_info(
-                        std_output::PrintColor::ERROR,
-                        "ERROR",
+                        std_output::PrintColor::RED,
+                        "RED",
                         "failed to submit code.",
                     );
                 }
             }
         }
         "login" => {
-            std_output::print_info(std_output::PrintColor::INFO, "INFO", "start login");
+            std_output::print_info(std_output::PrintColor::BLUE, "INFO", "start login");
             match subcommand::login::login() {
                 Ok(()) => {
                     std_output::print_info(
-                        std_output::PrintColor::INFO,
+                        std_output::PrintColor::BLUE,
                         "INFO",
                         "login is completed.",
                     );
                 }
                 Err(_) => {
-                    std_output::print_info(
-                        std_output::PrintColor::ERROR,
-                        "ERROR",
-                        "failed to login",
-                    );
+                    std_output::print_info(std_output::PrintColor::RED, "RED", "failed to login");
                 }
             }
         }
         _ => {
-            std_output::print_info(std_output::PrintColor::ERROR, "ERROR", "command not found");
+            std_output::print_info(std_output::PrintColor::RED, "RED", "command not found");
         }
     }
 

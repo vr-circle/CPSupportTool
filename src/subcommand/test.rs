@@ -1,9 +1,9 @@
 use super::utils;
-use std::io::prelude::*;
 use std::io::Read;
 use std::io::Write;
 use std::process::{Command, Stdio};
 use std::time::Duration;
+use std::{fmt::format, io::prelude::*};
 use std::{fs, result};
 use subprocess::Redirection;
 use subprocess::{Exec, Popen, PopenConfig};
@@ -23,7 +23,7 @@ pub fn test_code() -> Result<(), Box<dyn std::error::Error>> {
         }
         problem_num += 1;
         utils::std_output::print_info(
-            utils::std_output::PrintColor::INFO,
+            utils::std_output::PrintColor::BLUE,
             "INFO",
             format!("case - {}:", file_name_without_extension).as_str(),
         );
@@ -34,13 +34,6 @@ pub fn test_code() -> Result<(), Box<dyn std::error::Error>> {
             .map(|&s| s as char)
             .collect::<String>();
 
-        // let process = Exec::cmd("./a.out")
-        //     .stdin(input_string.as_str())
-        //     .stdout(Redirection::Pipe)
-        //     .capture()?
-        //     .stdout_str();
-
-        // let subprocess = Exec::cmd("./a.out").popen().unwrap();
         let mut subprocess = std::process::Command::new("./a.out")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -58,12 +51,10 @@ pub fn test_code() -> Result<(), Box<dyn std::error::Error>> {
 
         match subprocess.wait_timeout(Duration::new(2, 0)).unwrap() {
             Some(status) => {
-                println!("not timeout");
                 is_timeout = false;
                 status.code()
             }
             None => {
-                println!("timeout");
                 is_timeout = true;
                 subprocess.kill().unwrap();
                 subprocess.wait().unwrap().code()
@@ -85,14 +76,31 @@ pub fn test_code() -> Result<(), Box<dyn std::error::Error>> {
 
         if user_ans == correct_ans {
             ac_num += 1;
-            utils::std_output::print_info(utils::std_output::PrintColor::SUCCESS, "SUCCESS", "AC");
+            let message =
+                utils::std_output::color_print(utils::std_output::PrintColor::GREEN, "AC");
+            utils::std_output::print_info(
+                utils::std_output::PrintColor::GREEN,
+                "SUCCESS",
+                message.as_str(),
+            );
         } else if is_timeout {
-            utils::std_output::print_info(utils::std_output::PrintColor::WARN, "FAILURE", "TLE");
+            let message =
+                utils::std_output::color_print(utils::std_output::PrintColor::YELLOW, "TLE");
+            utils::std_output::print_info(
+                utils::std_output::PrintColor::RED,
+                "FAILURE",
+                message.as_str(),
+            );
             println!("input:\n{}", input_string);
-            println!("output:\n{}", user_ans);
+            println!("output: none");
             println!("expected:\n{}", correct_ans);
         } else {
-            utils::std_output::print_info(utils::std_output::PrintColor::ERROR, "FAILURE", "WA");
+            let message = utils::std_output::color_print(utils::std_output::PrintColor::RED, "WA");
+            utils::std_output::print_info(
+                utils::std_output::PrintColor::RED,
+                "FAILURE",
+                message.as_str(),
+            );
             println!("input:\n{}", input_string);
             println!("output:\n{}", user_ans);
             println!("expected:\n{}", correct_ans);
@@ -100,13 +108,13 @@ pub fn test_code() -> Result<(), Box<dyn std::error::Error>> {
     }
     if ac_num == problem_num {
         utils::std_output::print_info(
-            utils::std_output::PrintColor::SUCCESS,
+            utils::std_output::PrintColor::GREEN,
             "SUCCESS",
             format!("{} AC / {} cases", ac_num, problem_num).as_str(),
         );
     } else {
         utils::std_output::print_info(
-            utils::std_output::PrintColor::ERROR,
+            utils::std_output::PrintColor::RED,
             "FAILURE",
             format!("{} AC / {} cases", ac_num, problem_num).as_str(),
         );
