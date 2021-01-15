@@ -1,4 +1,5 @@
 use super::utils;
+use core::panic;
 use std::io::Read;
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -8,6 +9,49 @@ use std::{fs, result};
 use subprocess::Redirection;
 use subprocess::{Exec, Popen, PopenConfig};
 use wait_timeout::ChildExt;
+
+pub enum ProblemResultType {
+    AC,  // accepted
+    CE,  // compile error
+    WA,  // wrong answer
+    TLE, // time limit exceeded
+    RE,  // runtime error
+    MLE, // memory limit exceeded
+}
+
+pub struct ProblemResult {
+    result_type: ProblemResultType,
+    input: String,
+    user_output: String,
+    expected_output: String,
+}
+
+impl ProblemResult {
+    pub fn print(&self) {
+        match self.result_type {
+            ProblemResultType::AC => {
+                println!("AC");
+            }
+            ProblemResultType::WA => {
+                println!("WA");
+            }
+            ProblemResultType::TLE => {
+                println!("TLE");
+            }
+            _ => {
+                println!("error");
+            }
+        }
+        println!("input:\n{}", self.input);
+        println!("output: none");
+        println!("expected:\n{}", self.expected_output);
+    }
+}
+
+pub struct ProblemsResult {
+    ac_num: i8,
+    problems_result: Vec<ProblemResult>,
+}
 
 pub fn test_code() -> Result<(), Box<dyn std::error::Error>> {
     let test_dir = "test";
