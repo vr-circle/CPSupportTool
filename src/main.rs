@@ -16,7 +16,7 @@ fn main() {
     }
     let command = args[1].as_str();
     match command {
-        "n" => {
+        "n" | "new" => {
             std_output::print_info(
                 std_output::PrintColor::BLUE,
                 "INFO",
@@ -33,13 +33,13 @@ fn main() {
                 Err(_) => {
                     std_output::print_info(
                         std_output::PrintColor::RED,
-                        "RED",
+                        "FAILURE",
                         "failed to execute the new command",
                     );
                 }
             }
         }
-        "t" => {
+        "t" | "test" => {
             std_output::print_info(std_output::PrintColor::BLUE, "INFO", "start testing code");
             match subcommand::test::test_code() {
                 Ok(()) => {
@@ -52,13 +52,13 @@ fn main() {
                 Err(_) => {
                     std_output::print_info(
                         std_output::PrintColor::RED,
-                        "RED",
+                        "FAILURE",
                         "failed to code test",
                     );
                 }
             }
         }
-        "s" => {
+        "s" | "submit" => {
             std_output::print_info(
                 std_output::PrintColor::BLUE,
                 "INFO",
@@ -75,13 +75,13 @@ fn main() {
                 Err(_) => {
                     std_output::print_info(
                         std_output::PrintColor::RED,
-                        "RED",
+                        "FAILURE",
                         "failed to submit code.",
                     );
                 }
             }
         }
-        "login" => {
+        "l" | "login" => {
             std_output::print_info(std_output::PrintColor::BLUE, "INFO", "start login");
             match subcommand::login::login() {
                 Ok(()) => {
@@ -92,12 +92,20 @@ fn main() {
                     );
                 }
                 Err(_) => {
-                    std_output::print_info(std_output::PrintColor::RED, "RED", "failed to login");
+                    std_output::print_info(
+                        std_output::PrintColor::RED,
+                        "FAILURE",
+                        "failed to login",
+                    );
                 }
             }
         }
         _ => {
-            std_output::print_info(std_output::PrintColor::RED, "RED", "command not found");
+            std_output::print_info(
+                std_output::PrintColor::RED,
+                "ERROR",
+                format!("{}: command not found", command).as_str(),
+            );
         }
     }
 
