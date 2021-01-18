@@ -4,33 +4,41 @@ use std::fs;
 use std::io::Write;
 
 pub fn new(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+    // create a config file what is written problems informations.
+
     if args.len() == 2 {
         println!("cli new <target_contest_name>");
         return Ok(());
     }
     fs::create_dir(format!("{}", args[2]))?;
-    let tasks_url = format!("https://atcoder.jp/contests/{}/tasks", args[2]);
-    // println!("target tasks url: {}", tasks_url);
+    let atcoder_url = "https://atcoder.jp";
+    let tasks_url = format!("{}/contests/{}/tasks", atcoder_url, args[2]);
     let parse_str = "tbody > tr > td.text-center.no-break > a";
     let selector = scraper::Selector::parse(parse_str).unwrap();
-
     let body = reqwest::blocking::get(&tasks_url)?.text()?;
     let document = scraper::Html::parse_fragment(&body);
     let elements = document.select(&selector);
 
-    let atcoder_url = "https://atcoder.jp";
-
     for e in elements {
         fs::create_dir_all(format!("./{}/{}/test", args[2], e.text().next().unwrap()))?;
-        // println!(
-        //     "create dir: ./{}/{}/test",
-        //     args[2],
-        //     e.text().next().unwrap()
-        // );
+        println!(
+            "create dir: ./{}/{}/test",
+            args[2],
+            e.text().next().unwrap()
+        );
 
+        // duplicate the specified file.
+        let target_file_name = "./sample";
+        let target_file_extension = ".cpp";
+        let target_file = format!("{}{}", target_file_name, target_file_extension);
         match fs::copy(
-            "./sample.cpp",
-            format!("./{}/{}/main.cpp", args[2], e.text().next().unwrap()),
+            target_file,
+            format!(
+                "./{}/{}/main{}",
+                args[2],
+                e.text().next().unwrap(),
+                target_file_extension
+            ),
         ) {
             Err(why) => println!("Err: {}", why),
             Ok(_) => {}
@@ -53,8 +61,7 @@ pub fn new(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
             .enumerate()
             .filter(|&(i, _)| i >= index_start && i < index_end)
             .fold("".to_string(), |s, (_, c)| format!("{}{}", s, c));
-
-        // println!("problem url: {}{}", atcoder_url, target_task_url);
+        println!("problem url: {}{}", atcoder_url, target_task_url);
 
         let parse_str = r#"div[id="task-statement"] > .lang > .lang-ja > .part > section > pre"#;
         let selector = scraper::Selector::parse(parse_str).unwrap();
@@ -64,12 +71,12 @@ pub fn new(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
         let elements = document.select(&selector);
         for (index, element) in elements.enumerate() {
             if index % 2 == 0 {
-                // println!(
-                //     "create file: ./{}/{}/{}.in",
-                //     args[2],
-                //     e.text().next().unwrap(),
-                //     index / 2 + 1
-                // );
+                println!(
+                    "create file: ./{}/{}/{}.in",
+                    args[2],
+                    e.text().next().unwrap(),
+                    index / 2 + 1
+                );
                 let mut file = fs::File::create(format!(
                     "./{}/{}/test/{}.in",
                     args[2],
@@ -78,14 +85,14 @@ pub fn new(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
                 ))?;
                 let context = element.text().next().unwrap();
                 file.write_all(context.as_bytes()).unwrap();
-            // println!("{}", context);
+                println!("{}", context);
             } else {
-                // println!(
-                //     "create file: ./{}/{}/{}.out",
-                //     args[2],
-                //     e.text().next().unwrap(),
-                //     index / 2 + 1
-                // );
+                println!(
+                    "create file: ./{}/{}/{}.out",
+                    args[2],
+                    e.text().next().unwrap(),
+                    index / 2 + 1
+                );
                 let mut file = fs::File::create(format!(
                     "./{}/{}/test/{}.out",
                     args[2],
@@ -94,7 +101,7 @@ pub fn new(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
                 ))?;
                 let context = element.text().next().unwrap();
                 file.write_all(context.as_bytes()).unwrap();
-                // println!("{}", context);
+                println!("{}", context);
             }
         }
     }
