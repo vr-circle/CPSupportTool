@@ -1,7 +1,18 @@
 use reqwest;
 use scraper;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Write;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Problems(Vec<Problem>);
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Problem {
+    name: String,
+    test_dir: String,
+    submit_file: String,
+}
 
 pub fn new(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
     // create a config file what is written problems informations.
