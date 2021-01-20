@@ -14,6 +14,21 @@ pub struct Problem {
     submit_file: String,
 }
 
+/*
+json example
+{
+    "A":{
+        name:"SampleProblem",
+        test_dir:"./test/A/",
+        submit_file:"./sample.cpp",
+    },
+    "B":{
+        ...
+    },
+    ...
+}
+*/
+
 pub fn new(args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
     // create a config file what is written problems informations.
 
