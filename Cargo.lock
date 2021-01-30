@@ -82,8 +82,6 @@ version = "0.1.0"
 dependencies = [
  "reqwest",
  "scraper",
- "serde",
- "serde_json",
  "subprocess",
  "wait-timeout",
 ]
@@ -1062,9 +1060,6 @@ name = "serde"
 version = "1.0.120"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "166b2349061381baf54a58e4b13c89369feb0ef2eaa57198899e2312aac30aab"
-dependencies = [
- "serde_derive",
-]
 
 [[package]]
 name = "serde_derive"
