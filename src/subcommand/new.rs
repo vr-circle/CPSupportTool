@@ -3,14 +3,6 @@ use scraper;
 use std::fs;
 use std::io::Write;
 
-pub struct Problems(Vec<Problem>);
-
-pub struct Problem {
-    name: String,
-    test_dir: String,
-    submit_file: String,
-}
-
 /*
 json example
 {
