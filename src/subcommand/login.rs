@@ -18,8 +18,8 @@ pub fn login() -> Result<(), ()> {
     let csrf_token = document.select(&selector);
 
     // post reqwest
-    let client = reqwest::Client::new();
-    let mut res = client.post(logini_url).body(/*reqwest body */).send();
+    // let client = reqwest::Client::new();
+    // let mut res = client.post(logini_url).body(/*reqwest body */).send();
 
     Ok(())
 }
