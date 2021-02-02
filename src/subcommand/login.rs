@@ -1,4 +1,6 @@
-use reqwest;
+use io;
+use reqwest::{self, Response};
+use std::collections::HashMap;
 
 use super::utils;
 
@@ -36,8 +38,18 @@ pub fn login() -> Result<(), std::io::Error> {
     };
 
     // post reqwest
+    let res = send_post(login_url, param);
+
     // let client = reqwest::Client::new();
     // let mut res = client.post(logini_url).body(/*reqwest body */).send();
 
     return Ok(());
+}
+
+pub async fn send_post(
+    url: &str,
+    params: HashMap<&str, &str>,
+) -> Result<reqwest::Response, io::std::Error> {
+    let client = reqwest::Client::new();
+    client.post(url).json(&params).send().await;
 }
