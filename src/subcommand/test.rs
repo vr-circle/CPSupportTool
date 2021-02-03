@@ -83,6 +83,21 @@ pub fn test() -> Result<(), ()> {
     let test_dir = "test";
     let test_files = fs::read_dir(test_dir).unwrap();
     let mut result_list: Vec<ProblemResult> = Vec::new();
+
+    // temp code, todo: test_files as file_path_list move (in_path,out_path) list
+    // let handles = Vec::new();
+    // for test_file_path in test_files {
+    //     let stdin_path = test_file_path.0;
+    //     let stdout_path = test_file_path.1;
+    //     let handle = std::thread::spawn(move || {
+    //         code_test("./a.out", stdin_path, stdout_path);
+    //     });
+    //     handles.push(handle);
+    // }
+    // for handle in handles {
+    //     handle.join().unwrap();
+    // }
+
     for test_file in test_files {
         let path_name = format!("{}", test_file.unwrap().path().display());
         let split_path_name: Vec<&str> = path_name.split('.').collect();
@@ -173,7 +188,6 @@ fn code_test(
     execute_file_path: &str,
     std_input_path: &str,
     std_output_path: &str,
-    expected_ans: String,
 ) -> ProblemResult {
     // execute_file_path == "./a.out";  maybe
     let std_input = fs::read(std_input_path)
