@@ -79,7 +79,7 @@ impl ProblemResult {
     }
 }
 
-pub fn test_code() -> Result<(), ()> {
+pub fn code_test() -> Result<(), ()> {
     let test_dir = "test";
     let test_files = fs::read_dir(test_dir).unwrap();
     let mut result_list: Vec<ProblemResult> = Vec::new();
