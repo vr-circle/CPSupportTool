@@ -41,7 +41,7 @@ fn main() {
         }
         "t" | "test" => {
             std_output::print_info(std_output::PrintColor::BLUE, "INFO", "start testing code");
-            match subcommand::test::code_test() {
+            match subcommand::test::test() {
                 Ok(()) => {
                     std_output::print_info(
                         std_output::PrintColor::BLUE,

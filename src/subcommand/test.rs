@@ -79,7 +79,7 @@ impl ProblemResult {
     }
 }
 
-pub fn code_test() -> Result<(), ()> {
+pub fn test() -> Result<(), ()> {
     let test_dir = "test";
     let test_files = fs::read_dir(test_dir).unwrap();
     let mut result_list: Vec<ProblemResult> = Vec::new();
@@ -167,4 +167,66 @@ pub fn code_test() -> Result<(), ()> {
         );
     }
     return Ok(());
+}
+
+fn code_test(
+    execute_file_path: &str,
+    std_input_path: &str,
+    std_output_path: &str,
+    expected_ans: String,
+) -> ProblemResult {
+    // execute_file_path == "./a.out";  maybe
+    let std_input = fs::read(std_input_path)
+        .unwrap()
+        .iter()
+        .map(|&s| s as char)
+        .collect::<String>();
+    let mut subprocess = std::process::Command::new(execute_file_path)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap();
+    {
+        let stdin = subprocess.stdin.as_mut().expect("failed to get stdin");
+        stdin
+            .write_all(std_input.as_bytes())
+            .expect("failed to write to stdin");
+    }
+    let is_timeout: bool;
+    let wait_time = Duration::new(2, 0);
+    match subprocess.wait_timeout(wait_time).unwrap() {
+        Some(_) => {
+            is_timeout = false;
+        }
+        None => {
+            is_timeout = true;
+            subprocess.kill().unwrap();
+        }
+    };
+    let mut user_ans = String::new();
+    subprocess
+        .stdout
+        .unwrap()
+        .read_to_string(&mut user_ans)
+        .unwrap();
+    let expected_ans = fs::read(std_output_path)
+        .unwrap()
+        .iter()
+        .map(|&s| s as char)
+        .collect::<String>();
+    let mut result: ProblemResult = ProblemResult {
+        problem_path: path_name,
+        result_type: ProblemResultType::AC,
+        input: std_input,
+        user_output: user_ans.clone(),
+        expected_output: expected_ans.clone(),
+    };
+    if is_timeout {
+        result.result_type = ProblemResultType::TLE;
+    } else if user_ans == expected_ans {
+        result.result_type = ProblemResultType::AC;
+    } else {
+        result.result_type = ProblemResultType::WA;
+    }
+    return result;
 }
