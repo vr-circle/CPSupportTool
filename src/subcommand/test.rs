@@ -1,12 +1,12 @@
 #![allow(unused_imports)]
 use super::utils;
 use core::panic;
-use std::io::Read;
 use std::io::Write;
 use std::process::{Command, Stdio};
 use std::time::Duration;
 use std::{fmt::format, io::prelude::*};
 use std::{fs, result};
+use std::{io::Read, sync::Mutex};
 use subprocess::Redirection;
 use subprocess::{Exec, Popen, PopenConfig};
 use wait_timeout::ChildExt;
@@ -83,21 +83,20 @@ pub fn test() -> Result<(), ()> {
     let test_dir = "test";
     // let test_files = fs::read_dir(test_dir).unwrap();
     let test_files = [("1.in", "1.out"), ("2.in", "2.out")];
-    let mut result_list: Vec<ProblemResult> = Vec::new();
+
+    let mut result_list_tmp = Vec::<ProblemResult>::new();
+    for i in 0..test_files.len() {
+        // result_list_tmp.push();
+    }
+    let result_list = std::sync::Arc::new(Mutex::new(result_list_tmp));
 
     let handles = Vec::new();
-    let result_list_ref = Vec::new();
-    let (left, right) = result_list.split_at_mut(1);
-    for i in 0..test_files.len() {
-        result_list_ref.push(1);
-    }
-    let (left, right) = result_list.split_at_mut(1);
-    for (index, test_file_path) in test_files.iter().enumerate() {
-        let (left, right) = result_list.split_at_mut(index);
+    for test_file_path in test_files.iter() {
         let stdin_path = test_file_path.0;
         let stdout_path = test_file_path.1;
         let handle = std::thread::spawn(move || {
-            left[left.len() - 1] = code_test("./a.out", stdin_path, stdout_path);
+            // add an argument what &mut ProblemResult in result_list
+            code_test("./a.out", stdin_path, stdout_path);
         });
         handles.push(handle);
     }
