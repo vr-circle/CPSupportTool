@@ -17,7 +17,7 @@ pub enum ProblemResultType {
     MLE, // memory limit exceeded
 }
 
-pub struct ProblemResult {
+pub struct ExecutionResult {
     problem_path: String,
     result_type: ProblemResultType,
     input: String,
@@ -25,7 +25,7 @@ pub struct ProblemResult {
     expected_output: String,
 }
 
-impl ProblemResult {
+impl ExecutionResult {
     pub fn print(&self) {
         utils::std_output::print_info(
             utils::std_output::PrintColor::BLUE,
@@ -80,9 +80,9 @@ pub fn test() -> Result<(), ()> {
     // let test_files = fs::read_dir(test_dir).unwrap();
     let test_files = [("1.in", "1.out"), ("2.in", "2.out")]; // sample
 
-    let result_list_tmp: Vec<Mutex<ProblemResult>> = (0..test_files.len() as i32)
+    let result_list_tmp: Vec<Mutex<ExecutionResult>> = (0..test_files.len() as i32)
         .map(|c| {
-            Mutex::new(ProblemResult {
+            Mutex::new(ExecutionResult {
                 input: String::from(""),
                 problem_path: String::from(""),
                 user_output: String::from(""),
@@ -127,7 +127,7 @@ fn code_test(
     execute_file_path: &str,
     std_input_path: &str,
     std_output_path: &str,
-) -> ProblemResult {
+) -> ExecutionResult {
     // execute_file_path == "./a.out";  maybe
     let std_input = fs::read(std_input_path)
         .unwrap()
@@ -167,7 +167,7 @@ fn code_test(
         .iter()
         .map(|&s| s as char)
         .collect::<String>();
-    let mut result: ProblemResult = ProblemResult {
+    let mut result: ExecutionResult = ExecutionResult {
         problem_path: path_name,
         result_type: ProblemResultType::AC,
         input: std_input,
