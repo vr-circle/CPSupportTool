@@ -1,10 +1,11 @@
 use super::utils;
 use core::panic;
-use std::fs;
+use fs::read_dir;
 use std::io::{Read, Write};
 use std::process::Stdio;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use std::{fs, result};
 use wait_timeout::ChildExt;
 
 #[derive(PartialEq)]
@@ -75,26 +76,44 @@ impl ExecutionResult {
 }
 
 pub fn test() -> Result<(), ()> {
-    // let test_dir = "test";
-    // let test_files = fs::read_dir(test_dir).unwrap();
-    let test_files = [("1.in", "1.out"), ("2.in", "2.out")]; // sample
+    let test_dir = "test";
+    let mut files_in_test_dir = std::fs::read_dir(test_dir)
+        .unwrap()
+        .map(|res| res.map(|e| e.path()))
+        .collect::<Result<Vec<_>, std::io::Error>>()
+        .unwrap();
+    files_in_test_dir.sort();
 
-    let result_list_tmp: Vec<Mutex<ExecutionResult>> = (0..test_files.len() as i32)
-        .map(|c| {
-            Mutex::new(ExecutionResult {
-                input: String::from(""),
-                case_number: c + 1,
-                user_output: String::from(""),
-                expected_output: String::from(""),
-                result_type: ExecutionResultType::AC,
-            })
-        })
-        .collect();
+    let test_file_hashset: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let result_list_tmp: Vec<Mutex<ExecutionResult>> = Vec::new();
+    for (index, test_file) in files_in_test_dir.iter().enumerate() {
+        let file_name_without_extension = test_file
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .split(".")
+            .collect::<Vec<_>>()
+            .first()
+            .unwrap()
+            .to_string();
+        if test_file_hashset.contains(&file_name_without_extension) {
+            continue;
+        }
+        test_file_hashset.insert(file_name_without_extension);
+        result_list_tmp.push(Mutex::new(ExecutionResult {
+            case_number: index as i32,
+            input: String::from(""),
+            expected_output: String::from(""),
+            result_type: ExecutionResultType::WA,
+            user_output: String::from(""),
+        }));
+    }
 
     let result_list = Arc::new(result_list_tmp);
 
     let mut handles = Vec::new();
-    for (index, test_file_path) in test_files.iter().enumerate() {
+    for result in result_list {
         let stdin_path = test_file_path.0;
         let stdout_path = test_file_path.1;
         let handle = std::thread::spawn(move || {
