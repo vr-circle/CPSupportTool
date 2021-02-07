@@ -9,16 +9,16 @@ use wait_timeout::ChildExt;
 
 #[derive(PartialEq)]
 pub enum ExecutionResultType {
-    AC,  // accepted
-    CE,  // compile error
-    WA,  // wrong answer
+    AC, // accepted
+    // CE,  // compile error
+    WA, // wrong answer
     TLE, // time limit exceeded
-    RE,  // runtime error
-    MLE, // memory limit exceeded
+        // RE,  // runtime error
+        // MLE, // memory limit exceeded
 }
 
 pub struct ExecutionResult {
-    problem_path: String,
+    case_number: i32,
     result_type: ExecutionResultType,
     input: String,
     user_output: String,
@@ -30,7 +30,7 @@ impl ExecutionResult {
         utils::std_output::print_info(
             utils::std_output::PrintColor::BLUE,
             "INFO",
-            format!("case - {}:", self.problem_path).as_str(),
+            format!("case - {}:", self.case_number).as_str(),
         );
         match self.result_type {
             ExecutionResultType::AC => {
@@ -65,10 +65,9 @@ impl ExecutionResult {
                 println!("input:\n{}", self.input);
                 println!("output: \n{}", self.user_output);
                 println!("expected:\n{}", self.expected_output);
-            }
-            _ => {
-                println!("error");
-            }
+            } // _ => {
+              //     println!("error");
+              // }
         }
         // new line
         println!("");
@@ -76,7 +75,7 @@ impl ExecutionResult {
 }
 
 pub fn test() -> Result<(), ()> {
-    let test_dir = "test";
+    // let test_dir = "test";
     // let test_files = fs::read_dir(test_dir).unwrap();
     let test_files = [("1.in", "1.out"), ("2.in", "2.out")]; // sample
 
@@ -84,7 +83,7 @@ pub fn test() -> Result<(), ()> {
         .map(|c| {
             Mutex::new(ExecutionResult {
                 input: String::from(""),
-                problem_path: String::from(""),
+                case_number: c + 1,
                 user_output: String::from(""),
                 expected_output: String::from(""),
                 result_type: ExecutionResultType::AC,
@@ -94,13 +93,13 @@ pub fn test() -> Result<(), ()> {
 
     let result_list = Arc::new(result_list_tmp);
 
-    let handles = Vec::new();
-    for test_file_path in test_files.iter() {
+    let mut handles = Vec::new();
+    for (index, test_file_path) in test_files.iter().enumerate() {
         let stdin_path = test_file_path.0;
         let stdout_path = test_file_path.1;
         let handle = std::thread::spawn(move || {
             // add an argument what &mut ProblemResult in result_list
-            code_test("./a.out", stdin_path, stdout_path);
+            code_test(index as i32, "./a.out", stdin_path, stdout_path);
         });
         handles.push(handle);
     }
@@ -124,6 +123,7 @@ pub fn test() -> Result<(), ()> {
 }
 
 fn code_test(
+    case_number: i32,
     execute_file_path: &str,
     std_input_path: &str,
     std_output_path: &str,
@@ -168,7 +168,7 @@ fn code_test(
         .map(|&s| s as char)
         .collect::<String>();
     let mut result: ExecutionResult = ExecutionResult {
-        problem_path: path_name,
+        case_number: case_number,
         result_type: ExecutionResultType::AC,
         input: std_input,
         user_output: user_ans.clone(),
