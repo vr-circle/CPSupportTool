@@ -8,7 +8,7 @@ use std::time::Duration;
 use wait_timeout::ChildExt;
 
 #[derive(PartialEq)]
-pub enum ProblemResultType {
+pub enum ExecutionResultType {
     AC,  // accepted
     CE,  // compile error
     WA,  // wrong answer
@@ -19,7 +19,7 @@ pub enum ProblemResultType {
 
 pub struct ExecutionResult {
     problem_path: String,
-    result_type: ProblemResultType,
+    result_type: ExecutionResultType,
     input: String,
     user_output: String,
     expected_output: String,
@@ -33,7 +33,7 @@ impl ExecutionResult {
             format!("case - {}:", self.problem_path).as_str(),
         );
         match self.result_type {
-            ProblemResultType::AC => {
+            ExecutionResultType::AC => {
                 let message =
                     utils::std_output::color_print(utils::std_output::PrintColor::GREEN, "AC");
                 utils::std_output::print_info(
@@ -42,7 +42,7 @@ impl ExecutionResult {
                     message.as_str(),
                 );
             }
-            ProblemResultType::WA => {
+            ExecutionResultType::WA => {
                 let message =
                     utils::std_output::color_print(utils::std_output::PrintColor::RED, "WA");
                 utils::std_output::print_info(
@@ -54,7 +54,7 @@ impl ExecutionResult {
                 println!("output: \n{}", self.user_output);
                 println!("expected:\n{}", self.expected_output);
             }
-            ProblemResultType::TLE => {
+            ExecutionResultType::TLE => {
                 let message =
                     utils::std_output::color_print(utils::std_output::PrintColor::YELLOW, "TLE");
                 utils::std_output::print_info(
@@ -87,7 +87,7 @@ pub fn test() -> Result<(), ()> {
                 problem_path: String::from(""),
                 user_output: String::from(""),
                 expected_output: String::from(""),
-                result_type: ProblemResultType::AC,
+                result_type: ExecutionResultType::AC,
             })
         })
         .collect();
@@ -169,17 +169,17 @@ fn code_test(
         .collect::<String>();
     let mut result: ExecutionResult = ExecutionResult {
         problem_path: path_name,
-        result_type: ProblemResultType::AC,
+        result_type: ExecutionResultType::AC,
         input: std_input,
         user_output: user_ans.clone(),
         expected_output: expected_ans.clone(),
     };
     if is_timeout {
-        result.result_type = ProblemResultType::TLE;
+        result.result_type = ExecutionResultType::TLE;
     } else if user_ans == expected_ans {
-        result.result_type = ProblemResultType::AC;
+        result.result_type = ExecutionResultType::AC;
     } else {
-        result.result_type = ProblemResultType::WA;
+        result.result_type = ExecutionResultType::WA;
     }
     return result;
 }
