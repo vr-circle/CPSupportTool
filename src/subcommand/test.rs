@@ -1,18 +1,13 @@
-#![allow(unused_imports)]
 use super::utils;
 use core::panic;
-use std::io::Write;
-use std::process::{Command, Stdio};
+use std::fs;
+use std::io::{Read, Write};
+use std::process::Stdio;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use std::{fmt::format, io::prelude::*};
-use std::{fs, result};
-use std::{io::Read, sync::Mutex};
-use subprocess::Redirection;
-use subprocess::{Exec, Popen, PopenConfig};
 use wait_timeout::ChildExt;
 
 #[derive(PartialEq)]
-#[allow(dead_code)]
 pub enum ProblemResultType {
     AC,  // accepted
     CE,  // compile error
@@ -75,6 +70,7 @@ impl ProblemResult {
                 println!("error");
             }
         }
+        // new line
         println!("");
     }
 }
@@ -82,13 +78,21 @@ impl ProblemResult {
 pub fn test() -> Result<(), ()> {
     let test_dir = "test";
     // let test_files = fs::read_dir(test_dir).unwrap();
-    let test_files = [("1.in", "1.out"), ("2.in", "2.out")];
+    let test_files = [("1.in", "1.out"), ("2.in", "2.out")]; // sample
 
-    let mut result_list_tmp = Vec::<ProblemResult>::new();
-    for i in 0..test_files.len() {
-        // result_list_tmp.push();
-    }
-    let result_list = std::sync::Arc::new(Mutex::new(result_list_tmp));
+    let result_list_tmp: Vec<Mutex<ProblemResult>> = (0..test_files.len() as i32)
+        .map(|c| {
+            Mutex::new(ProblemResult {
+                input: String::from(""),
+                problem_path: String::from(""),
+                user_output: String::from(""),
+                expected_output: String::from(""),
+                result_type: ProblemResultType::AC,
+            })
+        })
+        .collect();
+
+    let result_list = Arc::new(result_list_tmp);
 
     let handles = Vec::new();
     for test_file_path in test_files.iter() {
@@ -100,9 +104,22 @@ pub fn test() -> Result<(), ()> {
         });
         handles.push(handle);
     }
-    for handle in handles {
+    // wait for each a.out
+    for handle in handles.into_iter() {
         handle.join().unwrap();
     }
+
+    // pickup vec from result_list
+    let result_list_vec = match Arc::try_unwrap(result_list) {
+        Ok(v) => v,
+        Err(_) => panic!("error: failed to execute in Arc::try_unwrap."),
+    };
+
+    // print information
+    for x in result_list_vec.iter() {
+        x.lock().unwrap().print();
+    }
+
     Ok(())
 }
 
