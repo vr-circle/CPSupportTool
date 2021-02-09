@@ -112,13 +112,11 @@ pub fn test() -> Result<(), ()> {
 
     let result_list = Arc::new(result_list_tmp);
 
+    // todo: how to loop
     let mut handles = Vec::new();
     for result in result_list {
-        let stdin_path = test_file_path.0;
-        let stdout_path = test_file_path.1;
         let handle = std::thread::spawn(move || {
-            // add an argument what &mut ProblemResult in result_list
-            code_test(index as i32, "./a.out", stdin_path, stdout_path);
+            code_test(result);
         });
         handles.push(handle);
     }
