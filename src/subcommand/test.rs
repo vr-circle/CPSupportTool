@@ -8,6 +8,12 @@ use std::time::Duration;
 use std::{fs, result};
 use wait_timeout::ChildExt;
 
+pub struct ProblemCase {
+    number: i32,
+    std_input: String,
+    expected_output: String,
+}
+
 #[derive(PartialEq)]
 pub enum ExecutionResultType {
     AC, // accepted
@@ -19,11 +25,9 @@ pub enum ExecutionResultType {
 }
 
 pub struct ExecutionResult {
-    case_number: i32,
+    problem_case: ProblemCase,
     result_type: ExecutionResultType,
-    input: String,
     user_output: String,
-    expected_output: String,
 }
 
 impl ExecutionResult {
@@ -31,7 +35,7 @@ impl ExecutionResult {
         utils::std_output::print_info(
             utils::std_output::PrintColor::BLUE,
             "INFO",
-            format!("case - {}:", self.case_number).as_str(),
+            format!("case - {}:", self.problem_case.number).as_str(),
         );
         match self.result_type {
             ExecutionResultType::AC => {
@@ -85,7 +89,7 @@ pub fn test() -> Result<(), ()> {
     files_in_test_dir.sort();
 
     let test_file_hashset: std::collections::HashSet<String> = std::collections::HashSet::new();
-    let result_list_tmp: Vec<Mutex<ExecutionResult>> = Vec::new();
+    let problem_case_list_tmp: Vec<Mutex<ProblemCase>> = Vec::new();
     for (index, test_file) in files_in_test_dir.iter().enumerate() {
         let file_name_without_extension = test_file
             .file_name()
@@ -101,22 +105,30 @@ pub fn test() -> Result<(), ()> {
             continue;
         }
         test_file_hashset.insert(file_name_without_extension);
-        result_list_tmp.push(Mutex::new(ExecutionResult {
-            case_number: index as i32,
-            input: String::from(""),
-            expected_output: String::from(""),
-            result_type: ExecutionResultType::WA,
-            user_output: String::from(""),
+        let std_input_path = file_name_without_extension + ".in";
+        let std_output_path = file_name_without_extension + ".out";
+        let std_input = fs::read(std_input_path)
+            .unwrap()
+            .iter()
+            .map(|&s| s as char)
+            .collect::<String>();
+        let expected_output = fs::read(std_output_path)
+            .unwrap()
+            .iter()
+            .map(|&s| s as char)
+            .collect::<String>();
+        problem_case_list_tmp.push(Mutex::new(ProblemCase {
+            number: index as i32,
+            std_input: std_input,
+            expected_output: expected_output,
         }));
     }
 
-    let result_list = Arc::new(result_list_tmp);
-
-    // todo: how to loop
+    let problem_case_list = Arc::new(problem_case_list_tmp);
     let mut handles = Vec::new();
-    for result in result_list {
+    for (index, case) in problem_case_list.into_iter().enumerate() {
         let handle = std::thread::spawn(move || {
-            code_test(result);
+            problem_case_list.lock().unwrap()[index] = code_test(case.lock().unwrap(), "./a.out")
         });
         handles.push(handle);
     }
@@ -139,19 +151,8 @@ pub fn test() -> Result<(), ()> {
     Ok(())
 }
 
-fn code_test(
-    case_number: i32,
-    execute_file_path: &str,
-    std_input_path: &str,
-    std_output_path: &str,
-) -> ExecutionResult {
-    // execute_file_path == "./a.out";  maybe
-    let std_input = fs::read(std_input_path)
-        .unwrap()
-        .iter()
-        .map(|&s| s as char)
-        .collect::<String>();
-    let mut subprocess = std::process::Command::new(execute_file_path)
+fn code_test(case: ProblemCase, execution_file_path: &str) -> ExecutionResult {
+    let mut subprocess = std::process::Command::new(execution_file_path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
@@ -159,7 +160,7 @@ fn code_test(
     {
         let stdin = subprocess.stdin.as_mut().expect("failed to get stdin");
         stdin
-            .write_all(std_input.as_bytes())
+            .write_all(case.std_input.as_bytes())
             .expect("failed to write to stdin");
     }
     let is_timeout: bool;
@@ -179,21 +180,14 @@ fn code_test(
         .unwrap()
         .read_to_string(&mut user_ans)
         .unwrap();
-    let expected_ans = fs::read(std_output_path)
-        .unwrap()
-        .iter()
-        .map(|&s| s as char)
-        .collect::<String>();
     let mut result: ExecutionResult = ExecutionResult {
-        case_number: case_number,
+        problem_case: case,
         result_type: ExecutionResultType::AC,
-        input: std_input,
-        user_output: user_ans.clone(),
-        expected_output: expected_ans.clone(),
+        user_output: user_ans,
     };
     if is_timeout {
         result.result_type = ExecutionResultType::TLE;
-    } else if user_ans == expected_ans {
+    } else if user_ans == case.expected_output {
         result.result_type = ExecutionResultType::AC;
     } else {
         result.result_type = ExecutionResultType::WA;
