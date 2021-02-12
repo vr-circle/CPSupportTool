@@ -55,9 +55,9 @@ impl ExecutionResult {
                     "FAILURE",
                     message.as_str(),
                 );
-                println!("input:\n{}", self.input);
+                println!("input:\n{}", self.problem_case.std_input);
                 println!("output: \n{}", self.user_output);
-                println!("expected:\n{}", self.expected_output);
+                println!("expected:\n{}", self.problem_case.expected_output);
             }
             ExecutionResultType::TLE => {
                 let message =
@@ -67,19 +67,23 @@ impl ExecutionResult {
                     "FAILURE",
                     message.as_str(),
                 );
-                println!("input:\n{}", self.input);
+                println!("input:\n{}", self.problem_case.std_input);
                 println!("output: \n{}", self.user_output);
-                println!("expected:\n{}", self.expected_output);
-            } // _ => {
+                println!("expected:\n{}", self.problem_case.expected_output);
+            } // _ => { // if it have the other case,
               //     println!("error");
               // }
         }
-        // new line
+        // create new line in order to read easily.
         println!("");
     }
 }
 
 pub fn test() -> Result<(), ()> {
+    // First, I create ExecutionResult list.
+    // Second, I create an new thread, and I move each element of ExecutionResult list for the thread.
+
+    // pickup files
     let test_dir = "test";
     let mut files_in_test_dir = std::fs::read_dir(test_dir)
         .unwrap()
@@ -89,7 +93,8 @@ pub fn test() -> Result<(), ()> {
     files_in_test_dir.sort();
 
     let test_file_hashset: std::collections::HashSet<String> = std::collections::HashSet::new();
-    let problem_case_list_tmp: Vec<Mutex<ProblemCase>> = Vec::new();
+    let problem_case_list_tmp: Vec<ProblemCase> = Vec::new();
+    let result_list_tmp: Vec<ExecutionResult> = Vec::new();
     for (index, test_file) in files_in_test_dir.iter().enumerate() {
         let file_name_without_extension = test_file
             .file_name()
@@ -117,19 +122,24 @@ pub fn test() -> Result<(), ()> {
             .iter()
             .map(|&s| s as char)
             .collect::<String>();
-        problem_case_list_tmp.push(Mutex::new(ProblemCase {
+        let _problem_case = ProblemCase {
             number: index as i32,
             std_input: std_input,
             expected_output: expected_output,
-        }));
+        };
+        problem_case_list_tmp.push(_problem_case);
+        result_list_tmp.push(ExecutionResult {
+            problem_case: _problem_case,
+            result_type: ExecutionResultType::WA,
+            user_output: String::from(""),
+        });
     }
 
+    let result_list = Arc::new(result_list_tmp);
     let problem_case_list = Arc::new(problem_case_list_tmp);
     let mut handles = Vec::new();
     for (index, case) in problem_case_list.into_iter().enumerate() {
-        let handle = std::thread::spawn(move || {
-            problem_case_list.lock().unwrap()[index] = code_test(case.lock().unwrap(), "./a.out")
-        });
+        let handle = std::thread::spawn(move || result_list) = code_test(case, "./a.out"));
         handles.push(handle);
     }
     // wait for each a.out
