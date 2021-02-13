@@ -94,7 +94,7 @@ pub fn test() -> Result<(), ()> {
 
     let test_file_hashset: std::collections::HashSet<String> = std::collections::HashSet::new();
     let problem_case_list_tmp: Vec<ProblemCase> = Vec::new();
-    let result_list_tmp: Vec<ExecutionResult> = Vec::new();
+    let result_list_tmp: Vec<Mutex<ExecutionResult>> = Vec::new();
     for (index, test_file) in files_in_test_dir.iter().enumerate() {
         let file_name_without_extension = test_file
             .file_name()
@@ -128,18 +128,26 @@ pub fn test() -> Result<(), ()> {
             expected_output: expected_output,
         };
         problem_case_list_tmp.push(_problem_case);
-        result_list_tmp.push(ExecutionResult {
+        result_list_tmp.push(Mutex::new(ExecutionResult {
             problem_case: _problem_case,
             result_type: ExecutionResultType::WA,
             user_output: String::from(""),
-        });
+        }));
     }
 
     let result_list = Arc::new(result_list_tmp);
     let problem_case_list = Arc::new(problem_case_list_tmp);
     let mut handles = Vec::new();
+    let size = problem_case_list.len();
     for (index, case) in problem_case_list.into_iter().enumerate() {
-        let handle = std::thread::spawn(move || result_list) = code_test(case, "./a.out"));
+        let result_clone = Arc::clone(&result_list);
+        let handle = std::thread::spawn(move || {
+            for x in result_clone.iter().skip(index).step_by(size) {
+                let mut target = x.lock().unwrap();
+                let tmp = code_test(case, "./a.out");
+                target.problem_case = tmp.problem_case;
+            }
+        });
         handles.push(handle);
     }
     // wait for each a.out
