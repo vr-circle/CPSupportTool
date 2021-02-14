@@ -1,13 +1,13 @@
 use super::utils;
 use core::panic;
-use fs::read_dir;
+use std::fs;
 use std::io::{Read, Write};
 use std::process::Stdio;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use std::{fs, result};
 use wait_timeout::ChildExt;
 
+#[derive(Clone)]
 pub struct ProblemCase {
     number: i32,
     std_input: String,
@@ -92,9 +92,9 @@ pub fn test() -> Result<(), ()> {
         .unwrap();
     files_in_test_dir.sort();
 
-    let test_file_hashset: std::collections::HashSet<String> = std::collections::HashSet::new();
-    let problem_case_list_tmp: Vec<ProblemCase> = Vec::new();
-    let result_list_tmp: Vec<Mutex<ExecutionResult>> = Vec::new();
+    let mut test_file_hashset: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut problem_case_list_tmp: Vec<ProblemCase> = Vec::new();
+    let mut result_list_tmp: Vec<Mutex<ExecutionResult>> = Vec::new();
     for (index, test_file) in files_in_test_dir.iter().enumerate() {
         let file_name_without_extension = test_file
             .file_name()
@@ -106,12 +106,12 @@ pub fn test() -> Result<(), ()> {
             .first()
             .unwrap()
             .to_string();
-        if test_file_hashset.contains(&file_name_without_extension) {
+        if test_file_hashset.contains(&file_name_without_extension.clone()) {
             continue;
         }
-        test_file_hashset.insert(file_name_without_extension);
-        let std_input_path = file_name_without_extension + ".in";
-        let std_output_path = file_name_without_extension + ".out";
+        test_file_hashset.insert(file_name_without_extension.clone());
+        let std_input_path = file_name_without_extension.clone() + ".in";
+        let std_output_path = file_name_without_extension.clone() + ".out";
         let std_input = fs::read(std_input_path)
             .unwrap()
             .iter()
@@ -127,9 +127,10 @@ pub fn test() -> Result<(), ()> {
             std_input: std_input,
             expected_output: expected_output,
         };
-        problem_case_list_tmp.push(_problem_case);
+        let _problem_case_clone = _problem_case.clone();
+        problem_case_list_tmp.push(_problem_case.clone());
         result_list_tmp.push(Mutex::new(ExecutionResult {
-            problem_case: _problem_case,
+            problem_case: _problem_case.clone(),
             result_type: ExecutionResultType::WA,
             user_output: String::from(""),
         }));
@@ -144,7 +145,7 @@ pub fn test() -> Result<(), ()> {
         let handle = std::thread::spawn(move || {
             for x in result_clone.iter().skip(index).step_by(size) {
                 let mut target = x.lock().unwrap();
-                let tmp = code_test(case, "./a.out");
+                let tmp = code_test(case.clone(), "./a.out");
                 target.problem_case = tmp.problem_case;
             }
         });
