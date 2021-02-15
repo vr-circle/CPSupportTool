@@ -1,5 +1,4 @@
-use io;
-use reqwest::{self, Response};
+use reqwest::{self};
 use std::collections::HashMap;
 
 use super::utils;
@@ -25,9 +24,14 @@ pub fn login() -> Result<(), std::io::Error> {
         }
     }
 
-    // How to input
-    let username = "";
-    let password = "";
+    // How to hide input
+    print!("username: ");
+    let mut buf = String::new();
+    std::io::stdin().read_line(&mut buf).ok();
+    let username = buf.trim();
+    print!("password: ");
+    std::io::stdin().read_line(&mut buf).ok();
+    let password = buf.trim();
 
     let param = {
         let mut params = std::collections::HashMap::new();
@@ -49,7 +53,7 @@ pub fn login() -> Result<(), std::io::Error> {
 pub async fn send_post(
     url: &str,
     params: HashMap<&str, &str>,
-) -> Result<reqwest::Response, io::std::Error> {
+) -> Result<reqwest::Response, std::io::Error> {
     let client = reqwest::Client::new();
     client.post(url).json(&params).send().await;
 }
