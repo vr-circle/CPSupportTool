@@ -93,7 +93,7 @@ pub fn test() -> Result<(), ()> {
     files_in_test_dir.sort();
 
     let mut test_file_hashset: std::collections::HashSet<String> = std::collections::HashSet::new();
-    let mut problem_case_list_tmp: Vec<ProblemCase> = Vec::new();
+    let mut problem_case_list: Vec<ProblemCase> = Vec::new();
     let mut result_list_tmp: Vec<Mutex<ExecutionResult>> = Vec::new();
     for (index, test_file) in files_in_test_dir.iter().enumerate() {
         let file_name_without_extension = test_file
@@ -128,7 +128,7 @@ pub fn test() -> Result<(), ()> {
             expected_output: expected_output,
         };
         let _problem_case_clone = _problem_case.clone();
-        problem_case_list_tmp.push(_problem_case.clone());
+        problem_case_list.push(_problem_case.clone());
         result_list_tmp.push(Mutex::new(ExecutionResult {
             problem_case: _problem_case.clone(),
             result_type: ExecutionResultType::WA,
@@ -137,9 +137,9 @@ pub fn test() -> Result<(), ()> {
     }
 
     let result_list = Arc::new(result_list_tmp);
-    let problem_case_list = Arc::new(problem_case_list_tmp);
     let mut handles = Vec::new();
     let size = problem_case_list.len();
+
     for (index, case) in problem_case_list.into_iter().enumerate() {
         let result_clone = Arc::clone(&result_list);
         let handle = std::thread::spawn(move || {
@@ -179,7 +179,7 @@ fn code_test(case: ProblemCase, execution_file_path: &str) -> ExecutionResult {
     {
         let stdin = subprocess.stdin.as_mut().expect("failed to get stdin");
         stdin
-            .write_all(case.std_input.as_bytes())
+            .write_all(case.clone().std_input.as_bytes())
             .expect("failed to write to stdin");
     }
     let is_timeout: bool;
@@ -193,20 +193,20 @@ fn code_test(case: ProblemCase, execution_file_path: &str) -> ExecutionResult {
             subprocess.kill().unwrap();
         }
     };
-    let mut user_ans = String::new();
+    let user_ans = String::new();
     subprocess
         .stdout
         .unwrap()
-        .read_to_string(&mut user_ans)
+        .read_to_string(&mut user_ans.clone())
         .unwrap();
     let mut result: ExecutionResult = ExecutionResult {
-        problem_case: case,
+        problem_case: case.clone(),
         result_type: ExecutionResultType::AC,
-        user_output: user_ans,
+        user_output: user_ans.clone(),
     };
     if is_timeout {
         result.result_type = ExecutionResultType::TLE;
-    } else if user_ans == case.expected_output {
+    } else if user_ans == case.clone().expected_output {
         result.result_type = ExecutionResultType::AC;
     } else {
         result.result_type = ExecutionResultType::WA;
