@@ -1,13 +1,13 @@
 use super::utils;
 use core::panic;
-use fs::read_dir;
+use std::fs;
 use std::io::{Read, Write};
 use std::process::Stdio;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use std::{fs, result};
 use wait_timeout::ChildExt;
 
+#[derive(Clone)]
 pub struct ProblemCase {
     number: i32,
     std_input: String,
@@ -55,9 +55,9 @@ impl ExecutionResult {
                     "FAILURE",
                     message.as_str(),
                 );
-                println!("input:\n{}", self.input);
+                println!("input:\n{}", self.problem_case.std_input);
                 println!("output: \n{}", self.user_output);
-                println!("expected:\n{}", self.expected_output);
+                println!("expected:\n{}", self.problem_case.expected_output);
             }
             ExecutionResultType::TLE => {
                 let message =
@@ -67,19 +67,23 @@ impl ExecutionResult {
                     "FAILURE",
                     message.as_str(),
                 );
-                println!("input:\n{}", self.input);
+                println!("input:\n{}", self.problem_case.std_input);
                 println!("output: \n{}", self.user_output);
-                println!("expected:\n{}", self.expected_output);
-            } // _ => {
+                println!("expected:\n{}", self.problem_case.expected_output);
+            } // _ => { // if it have the other case,
               //     println!("error");
               // }
         }
-        // new line
+        // create new line in order to read easily.
         println!("");
     }
 }
 
 pub fn test() -> Result<(), ()> {
+    // First, I create ExecutionResult list.
+    // Second, I create an new thread, and I move each element of ExecutionResult list for the thread.
+
+    // pickup files
     let test_dir = "test";
     let mut files_in_test_dir = std::fs::read_dir(test_dir)
         .unwrap()
@@ -88,8 +92,9 @@ pub fn test() -> Result<(), ()> {
         .unwrap();
     files_in_test_dir.sort();
 
-    let test_file_hashset: std::collections::HashSet<String> = std::collections::HashSet::new();
-    let problem_case_list_tmp: Vec<Mutex<ProblemCase>> = Vec::new();
+    let mut test_file_hashset: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut problem_case_list: Vec<ProblemCase> = Vec::new();
+    let mut result_list_tmp: Vec<Mutex<ExecutionResult>> = Vec::new();
     for (index, test_file) in files_in_test_dir.iter().enumerate() {
         let file_name_without_extension = test_file
             .file_name()
@@ -101,12 +106,12 @@ pub fn test() -> Result<(), ()> {
             .first()
             .unwrap()
             .to_string();
-        if test_file_hashset.contains(&file_name_without_extension) {
+        if test_file_hashset.contains(&file_name_without_extension.clone()) {
             continue;
         }
-        test_file_hashset.insert(file_name_without_extension);
-        let std_input_path = file_name_without_extension + ".in";
-        let std_output_path = file_name_without_extension + ".out";
+        test_file_hashset.insert(file_name_without_extension.clone());
+        let std_input_path = file_name_without_extension.clone() + ".in";
+        let std_output_path = file_name_without_extension.clone() + ".out";
         let std_input = fs::read(std_input_path)
             .unwrap()
             .iter()
@@ -117,18 +122,32 @@ pub fn test() -> Result<(), ()> {
             .iter()
             .map(|&s| s as char)
             .collect::<String>();
-        problem_case_list_tmp.push(Mutex::new(ProblemCase {
+        let _problem_case = ProblemCase {
             number: index as i32,
             std_input: std_input,
             expected_output: expected_output,
+        };
+        let _problem_case_clone = _problem_case.clone();
+        problem_case_list.push(_problem_case.clone());
+        result_list_tmp.push(Mutex::new(ExecutionResult {
+            problem_case: _problem_case.clone(),
+            result_type: ExecutionResultType::WA,
+            user_output: String::from(""),
         }));
     }
 
-    let problem_case_list = Arc::new(problem_case_list_tmp);
+    let result_list = Arc::new(result_list_tmp);
     let mut handles = Vec::new();
+    let size = problem_case_list.len();
+
     for (index, case) in problem_case_list.into_iter().enumerate() {
+        let result_clone = Arc::clone(&result_list);
         let handle = std::thread::spawn(move || {
-            problem_case_list.lock().unwrap()[index] = code_test(case.lock().unwrap(), "./a.out")
+            for x in result_clone.iter().skip(index).step_by(size) {
+                let mut target = x.lock().unwrap();
+                let tmp = code_test(case.clone(), "./a.out");
+                target.problem_case = tmp.problem_case;
+            }
         });
         handles.push(handle);
     }
@@ -160,7 +179,7 @@ fn code_test(case: ProblemCase, execution_file_path: &str) -> ExecutionResult {
     {
         let stdin = subprocess.stdin.as_mut().expect("failed to get stdin");
         stdin
-            .write_all(case.std_input.as_bytes())
+            .write_all(case.clone().std_input.as_bytes())
             .expect("failed to write to stdin");
     }
     let is_timeout: bool;
@@ -174,20 +193,20 @@ fn code_test(case: ProblemCase, execution_file_path: &str) -> ExecutionResult {
             subprocess.kill().unwrap();
         }
     };
-    let mut user_ans = String::new();
+    let user_ans = String::new();
     subprocess
         .stdout
         .unwrap()
-        .read_to_string(&mut user_ans)
+        .read_to_string(&mut user_ans.clone())
         .unwrap();
     let mut result: ExecutionResult = ExecutionResult {
-        problem_case: case,
+        problem_case: case.clone(),
         result_type: ExecutionResultType::AC,
-        user_output: user_ans,
+        user_output: user_ans.clone(),
     };
     if is_timeout {
         result.result_type = ExecutionResultType::TLE;
-    } else if user_ans == case.expected_output {
+    } else if user_ans == case.clone().expected_output {
         result.result_type = ExecutionResultType::AC;
     } else {
         result.result_type = ExecutionResultType::WA;
