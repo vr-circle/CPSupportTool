@@ -50,6 +50,7 @@ pub fn login() -> Result<(), std::io::Error> {
     return Ok(());
 }
 
+// send post request function. todo: fix reqwests compile error.
 pub async fn send_post(
     url: &str,
     params: HashMap<&str, &str>,
