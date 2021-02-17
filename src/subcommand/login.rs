@@ -26,12 +26,13 @@ pub fn login() -> Result<(), std::io::Error> {
 
     // How to hide input
     print!("username: ");
-    let mut buf = String::new();
-    std::io::stdin().read_line(&mut buf).ok();
-    let username = buf.trim();
+    let mut username_buf = String::new();
+    std::io::stdin().read_line(&mut username_buf).ok();
+    let username = username_buf.trim();
     print!("password: ");
-    std::io::stdin().read_line(&mut buf).ok();
-    let password = buf.trim();
+    let mut password_buf = String::new();
+    std::io::stdin().read_line(&mut password_buf).ok();
+    let password = password_buf.trim();
 
     let param = {
         let mut params = std::collections::HashMap::new();
