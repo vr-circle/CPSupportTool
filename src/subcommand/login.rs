@@ -54,7 +54,7 @@ pub fn login() -> Result<(), std::io::Error> {
 pub async fn send_post(
     url: &str,
     params: HashMap<&str, &str>,
-) -> Result<reqwest::Response, std::io::Error> {
+) -> Result<reqwest::Response, reqwest::Error> {
     let client = reqwest::Client::new();
-    client.post(url).json(&params).send().await;
+    client.post(url).json(&params).send().await
 }
